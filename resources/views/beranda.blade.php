@@ -112,9 +112,12 @@
 
                 </form>
 
-                <form action="/download/{{ $hasil_file->id }}">
+                <a href='/download/{{ $hasil_file->id }}' method="GET">
                     <button>Download</button>
-                </form>
+
+                </a>
+
+
     
             @endforeach
         

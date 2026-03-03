@@ -47,7 +47,8 @@ class Beranda extends Controller
                 'user_id' => auth()->id(),
                 'file' => $nama_file,
                 'nama_tampilan' => $nama_file,
-                'ukuran' => $ukuran_file
+                'ukuran' => $ukuran_file,
+                'izin' => 1
 
             ]);
 
@@ -309,9 +310,37 @@ class Beranda extends Controller
     {
         $ubah = Gallery::findOrFail($id);
 
-        $ubah->update([
+         $ubah->update([
             'izin' => $perizinan->izin
         ]);
+
+
+
+        $tempat = storage_path('data_user/' . auth()->id() . '/' . $ubah->file);
+
+
+        if (!file_exists($tempat)) {
+            return back()->with('izin_error','file tidak ada');
+        }
+
+        $ambil_konten = file_get_contents($tempat);
+
+
+        if ($perizinan->izin == 0 && $ubah->izin != 0 || is_null($perizinan->izin)) {
+            $enrkipsi_file = encrypt($ambil_konten);
+            file_put_contents($tempat,$enrkipsi_file);
+        }
+
+        if ($perizinan->izin == 1 && $ubah->izin == 0) {
+            try {
+                $dekripsi_file = decrypt($ambil_konten);
+                file_put_contents($tempat,$dekripsi_file);
+            }catch (Exception $e) {
+
+            }
+        }
+
+    
 
         if ($ubah->izin == 1) {
             $pesan = 'public';
@@ -393,13 +422,25 @@ class Beranda extends Controller
 
         $user_sekarang = auth()->id();
 
-        if ($file->user_id == $user_sekarang && $file->izin == 1) {
-            $tempat = 'data_user/' . $user_sekarang . '/' . $file->file;
+       
+        $tempat = 'data_user/' . $user_sekarang . '/' . $file->file;
 
+
+    
+
+        if ($file->user_id == $user_sekarang && $file->izin == 1) {
+          
             return Storage::download($tempat);
         }
 
-        return back()->with('error',"maaf data tidak bisa didownload!");
+        return back()->with('status','maaf anda tidak bisa download file');
+
+       
+       
+
+
+
+        
     }
 
     public function pindah($id)
@@ -610,20 +651,31 @@ class Beranda extends Controller
         $file = Gallery::find($id);
 
         $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $file->file);
-
-        if ($file->izin == 0)  {
-            abort(403, 'Maaf anda tidak memiliki akses');
-
-        }
+        $ambil_konten = file_get_contents($tempat);
 
 
+        try {
+            if ($file->izin == 0)  {
+                $teks = base64_encode($ambil_konten);
 
+                return view('lihat',compact('teks','file'));
+
+            } 
+
+        }catch (Exception $e) {
+            
+
+            }
+
+       
 
         if (!file_exists($tempat)) {
             return back()->with('error', 'file tidak ada');
         }
 
         try {
+
+
             $parse = new \Smalot\PdfParser\Parser();
             $pdf = $parse->parseFile($tempat);
 
