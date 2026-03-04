@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Attribute;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -15,8 +16,8 @@ use Illuminate\Support\Str;
 use Spatie\PdfToText\Pdf;
 
 
-class Beranda extends Controller
-{
+class Beranda extends Controller {
+
     public function akun($id)
     {
         $user = User::find($id);
@@ -28,7 +29,7 @@ class Beranda extends Controller
     public function upload(Request $upload)
     {
         $upload->validate([
-            'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf|max:2048'
+            'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf,video/mp4|max:2048'
 
         ]);
 
@@ -37,7 +38,7 @@ class Beranda extends Controller
 
             $nama_file =  $file->getClientOriginalName();
 
-            Storage::putFileAs('data_user/' . auth()->id(),$file,$nama_file);
+            $path = Storage::putFileAs('data_user/' . auth()->id(),$file,$nama_file);
 
             $ukuran_file = $file->getSize();
 
@@ -48,7 +49,8 @@ class Beranda extends Controller
                 'file' => $nama_file,
                 'nama_tampilan' => $nama_file,
                 'ukuran' => $ukuran_file,
-                'izin' => 1
+                'izin' => 1,
+                'path' => $path
 
             ]);
 
@@ -94,7 +96,8 @@ class Beranda extends Controller
         $folder_kedua =  Folder:: create([
             'nama_folder' => $strip_andalan,
             'user_id' => auth()->id(),
-            'parent_id' => $folderBaru->input('parent_id')
+            'parent_id' => $folderBaru->input('parent_id'),
+            'permission' => 1
 
         ]);
 
@@ -602,16 +605,49 @@ class Beranda extends Controller
     {
         $file_perm = Gallery::find($id);
 
+        $folder = Folder::find($file_perm->folder_id);
+
+        $parent_id = $folder->parent_id;
+
+    
+
         $file_perm->update([
             'izin' => $izin_file->input('izin')
         ]);
 
-        if ($izin_file->input('izin') == 0) {
-            $pesan = 'Private';
+        if ($parent_id) {
+            $folder_utama = Folder::find($parent_id);
+            $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $folder_utama->nama_folder . '/' . $folder->nama_folder . '/' . $file_perm->file );
+    
+
+        }else {
+             
+            $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $folder->nama_folder . '/' . $file_perm->file);
+       
         }
 
-        if ($izin_file->input('izin') == 1) {
+        $ambil_kontent = file_get_contents($tempat);    
+
+      
+
+        if ($izin_file->input('izin') == 0 || $izin_file->input('izin') != 0 || is_null($izin_file->izin)) {
+            $pesan = 'Private';
+
+            $enkripsi = encrypt($ambil_kontent);
+            file_put_contents($tempat,$enkripsi);
+
+
+        }
+
+        if ($izin_file->input('izin') == 1 && $izin_file->izin == 1) {
             $pesan = 'Public';
+
+            try {
+                $dekripsi = decrypt($ambil_kontent);
+                file_put_contents($tempat,$dekripsi);
+            }catch (Exception $e) {
+
+            }
         }
 
 
@@ -691,8 +727,53 @@ class Beranda extends Controller
 
     }
 
-  
 
+    public function open_subfile($id)
+    {
+        $cari_file = Gallery::find($id);
+
+        $folder = Folder::find($cari_file->folder_id);
+
+        $parent_id = $folder->parent_id;
+
+        if ($parent_id) {
+            $folder_utama = Folder::find($parent_id);
+            $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $folder_utama->nama_folder . '/' . $folder->nama_folder . '/' . $cari_file->file );
+            
+        }else {
+            
+             $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $folder->nama_folder . '/' . $cari_file->file);
+        }
+
+    
+
+         $isi_konten = file_get_contents($tempat);
+        try {
+            if ($cari_file->izin == 0) {
+                    $teks = base64_encode($isi_konten);
+
+                    return view('lihat_subfile',compact('teks','cari_file'));
+                }
+            }catch (Exception $e) {
+                return back()->with('status','gagal enkripsi file');
+            }
+
+            if (!file_exists($tempat)) {
+                return back()->with('status','file tidak ada');
+            }
+
+            try {
+                $parse = new \Smalot\PdfParser\Parser();
+                $pdf = $parse->parseFile($tempat);
+                $teks = $pdf->getText();
+
+                return view('lihat_subfile',compact('teks','cari_file'));
+
+            }catch (\Exception $e ) {
+
+                return back()->with('status',$e->getMessage());
+        }
+    }
 
 
 }

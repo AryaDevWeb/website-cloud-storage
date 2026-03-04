@@ -69,7 +69,11 @@
 
     @if (isset($isi_folder))
          @foreach ($isi_folder->files as $isi_file )
-        <button>{{ $isi_file->file }}</button>
+
+        <form action="/open_subfile/{{ $isi_file->id }}" method="GET">
+            <button>{{ $isi_file->file }}</button>
+
+        </form>
 
         <p>Ukuran: {{ $isi_file->ukuran_format }}</p>
         <p>Tanggal Upload: {{ $isi_file->created_at->format('d-m-Y') }}</p>

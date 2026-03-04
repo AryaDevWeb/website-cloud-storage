@@ -99,6 +99,8 @@ Route::middleware(['auth','verified'])->group( function () {
 
     Route::get('/open_file/{id}', [Beranda::class,'open_file' ]);
 
+    Route::get('/open_subfile/{id}', [Beranda::class, 'open_subfile']);
+
     
 }
 

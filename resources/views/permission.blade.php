@@ -20,10 +20,6 @@
 
     </form>
 
-    @if (isset($isi_file->izin))
-        <p>DEBUG: {{ $isi_file->izin }}</p>
-    
-    @endif
 
     @if (isset($isi_file->izin))
         <p>Status File: {{ $isi_file->izin == 1 ? 'public' : 'private'}}</p>
