@@ -10,7 +10,7 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Base */
+/* ── Base ─────────────────────────────────────────── */
 * {
     box-sizing: border-box;
 }
@@ -20,36 +20,39 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar for dark theme */
+/* ── Scrollbar (light theme) ─────────────────────── */
 ::-webkit-scrollbar {
     width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-    background: #0a0f1e;
-}
-::-webkit-scrollbar-thumb {
-    background: #1e293b;
-    border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: #f8fafc;
 }
 
-/* Custom radio button styling */
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ── Custom radio buttons ────────────────────────── */
 input[type="radio"] {
     appearance: none;
     width: 18px;
     height: 18px;
-    border: 2px solid #1e293b;
+    border: 2px solid #e2e8f0;
     border-radius: 50%;
-    background: #0a0f1e;
+    background: #ffffff;
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
 }
 
 input[type="radio"]:checked {
-    border-color: #3b82f6;
+    border-color: #2563eb;
 }
 
 input[type="radio"]:checked::after {
@@ -59,20 +62,20 @@ input[type="radio"]:checked::after {
     left: 3px;
     width: 8px;
     height: 8px;
-    background: #3b82f6;
+    background: #2563eb;
     border-radius: 50%;
 }
 
-/* File input */
+/* ── File input ──────────────────────────────────── */
 input[type="file"] {
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 input[type="file"]::file-selector-button {
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #334155;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     cursor: pointer;
@@ -82,5 +85,5 @@ input[type="file"]::file-selector-button {
 }
 
 input[type="file"]::file-selector-button:hover {
-    background: #334155;
+    background: #e2e8f0;
 }

@@ -13,634 +13,362 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Folder;
 use Illuminate\Support\Str;
 use Spatie\PdfToText\Pdf;
+use Illuminate\Validation\Rule;
 
 
 class Beranda extends Controller
 {
     public function akun($id)
     {
-        $user = User::find($id);
+        $user = User::findOrFail($id);
         $folders = $user->folders()->whereNull('parent_id')->get();
-        $files = $user->galleries()->get();
+        $files = $user->galleries()->whereNull('folder_id')->get();
 
         return view('beranda', compact('user', 'folders', 'files'));
     }
-    public function upload(Request $upload)
-    {
-        $upload->validate([
-            'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf|max:2048'
 
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf,video/mp4|max:2048',
+            'folder_id' => 'nullable|exists:folders,id'
         ]);
 
-        if ($upload->hasFile('upload')) {
-            $file = $upload->file('upload');
-
-            $nama_file =  $file->getClientOriginalName();
-
-            Storage::putFileAs('data_user/' . auth()->id(),$file,$nama_file);
-
-            $ukuran_file = $file->getSize();
-
-            
-
-            Gallery:: create([
-                'user_id' => auth()->id(),
-                'file' => $nama_file,
-                'nama_tampilan' => $nama_file,
-                'ukuran' => $ukuran_file
-
-            ]);
-
-            
-            $nama_tampil = $nama_file;
-
-            $koin_user = Wallet::firstOrCreate(
-                ['user_id' => auth()->id()],
-                ['koin' => 0]
-                );
-
-            $koin_user->increment('koin',amount: 10);
-
-            return redirect('/beranda/'.auth()->id())->with('nama_tampil',$nama_tampil);
-        
-        }
-    }
-    public function hapus($id)
-    {
-        $hapus_file = Gallery::find($id);
-
-        $akun = auth()->id();
-
-
-        Storage::delete('data_user/' . $akun . '/' . $hapus_file->file);
-        
-        $hapus_file->delete();
-
-        return redirect('/beranda/' . auth()->id())->with('hapus_sukses', 'data: ' . $hapus_file->file . ' berhasil dihapus' );
-    }
-
-    public function folder(Request $folderBaru)
-    {
-        $folderBaru->validate([
-            'nama' => 'required|min:3'
-
-        ]);
-
-        $user = auth()->id();
-
-        $strip_andalan = str_replace(' ','_',$folderBaru->nama);
-
-        $folder_kedua =  Folder:: create([
-            'nama_folder' => $strip_andalan,
-            'user_id' => auth()->id(),
-            'parent_id' => $folderBaru->input('parent_id')
-
-        ]);
-
-
-        $tambah_koin = Wallet::firstOrCreate(
-            ['user_id' => auth()->id()],
-            ['koin' =>  0 ]
-        );
-        $tambah_koin->increment('koin', 10);
-
-        if ($folder_kedua->parent_id) {
-            $folder_utama = Folder::find($folder_kedua->parent_id);
-            $tempat_direktori = 'data_user/' . $user . '/' . $folder_utama->nama_folder .'/' . $folder_kedua->nama_folder;
-
-        }else {
-            $tempat_direktori = 'data_user/' . $user .'/' . $folder_kedua->nama_folder;
-
-        }
-
-    
-
-        if (!Storage::exists($tempat_direktori)) {
-            Storage::makeDirectory($tempat_direktori);
-            
-        }
-            
-
-        return back()
-        ->with('notif','folder berhasil ditambakan!');
-
-
-    }
-
-    public function new_folder($id)
-    {
-        $isi_folder = Folder::with(relations: ['children', 'user'])->findOrFail(id: $id);
-
-        if ($isi_folder->user_id !== auth()->id() && $isi_folder->permission == 0) {
-            abort(403, 'maaf anda tidak ada perizinan');
-        }
-
-
-
-        return view('isi', data: compact(var_name: 'isi_folder'));
-    }
-
-    public function pencarian(Request $cari)
-    {
-        $kunci = $cari->cari;
-        
-        $user = auth()->user();
-
-
-        if($kunci) {
-            $pemisah_str = str_replace(' ','_',$kunci);
-
-            $folders = $user->folders()->where('nama_folder', 'LIKE' , '%' . $pemisah_str . '%')->get();
-            $files = $user->galleries()->where('nama_tampilan', 'LIKE' , '%' . $pemisah_str . '%')->get();
-
-
-        }else {
-            $folders = $user->folders()->whereNull('parent_id')->get();
-            $files = $user->galleries();
-        }
-     
-        return view('beranda',compact('user','folders','files'));
-        
-    }
-
-    public function hapus_folder($id)
-    {
-        $hapus_folder = Folder::find($id);
-
-        $akun = auth()->id();
-
-
-        $hapus_folder->delete();
-
-        $tempat_hapus = 'data_user/' . $akun . '/' . $hapus_folder->nama_folder;
-
-        Storage::deleteDirectory($tempat_hapus);
-        $nama = $hapus_folder->nama_folder;
-    
-
-
-
-        return redirect('/beranda/' .auth()->id())->with('folder_status',"folder " . $nama ." berhasil dihapus");
-
-    }
-    public function hapus_subfolder($id)
-    {
-        $subfolder_hapus = Folder::find(id: $id);
-        $parent_id = $subfolder_hapus->parent_id;
-
-        $akun = auth()->id();
-
-
-        if ($parent_id) {
-            $folder_utama = Folder::find($parent_id);
-            $tempat_subfolder = 'data_user/' . $akun . '/' . $folder_utama->nama_folder . '/' . $subfolder_hapus->nama_folder;
-            
-        }   
-       
-        if (Storage::exists($tempat_subfolder)) {
-            Storage::deleteDirectory($tempat_subfolder);
-        }
-
-        
-
-
-
-        $subfolder_hapus->delete();
-
-        return redirect('/folder_open/' . $parent_id)->with('status_subfolder', 'Folder berhasil dihapus');
-    }
-
-    public function upload_subfolder(Request $upload_subfolder)
-    {
-        $upload_subfolder->validate(rules: [
-            'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf|max:2048'
-
-        ]);
-
-        if ($upload_subfolder->hasFile('upload')) {
-            $file = $upload_subfolder->file('upload');
-
-            $nama =  $file->getClientOriginalName();
-
-            $ukuran = $file->getSize();
-
+        if ($request->hasFile('upload')) {
+            $file = $request->file('upload');
+            $fileSize = $file->getSize();
+            $user = auth()->user();
+
+            // Check if user has enough storage
+            if (($user->storage_used + $fileSize) > $user->storage_quota) {
+                return back()->with('error', 'Penyimpanan Anda penuh! Sisa ruang: ' . number_format(($user->storage_quota - $user->storage_used) / 1024 / 1024, 2) . ' MB');
+            }
+
+            $nama_file = $file->getClientOriginalName();
+            $folder_id = $request->input('folder_id');
+            $user_id = $user->id;
+
+            // Resolve path
+            $storage_path = 'data_user/' . $user_id;
+            if ($folder_id) {
+                $folder = Folder::findOrFail($folder_id);
+                $storage_path = $folder->path;
+            }
+
+            $path = Storage::putFileAs($storage_path, $file, $nama_file);
 
             Gallery::create([
-                'user_id' => auth()->id(),
-                'folder_id' => $upload_subfolder->input('folder_id'),
-                'file' => $nama,
-                'ukuran' => $ukuran,
-                'nama_tampilan' => $nama
-
-
+                'user_id' => $user_id,
+                'folder_id' => $folder_id,
+                'file' => $nama_file,
+                'nama_tampilan' => $nama_file,
+                'ukuran' => $fileSize,
+                'izin' => 1,
+                'path' => $path
             ]);
 
-            $folder_utama = Folder::find($upload_subfolder->input('folder_id'));
+            // Update storage used
+            $user->increment('storage_used', $fileSize);
 
-            $parent_id = $folder_utama->parent_id;
-            $akun = auth()->id();
+            Wallet::firstOrCreate(['user_id' => $user_id], ['koin' => 0])->increment('koin', 10);
 
-        
-
-
-
-
-            if ($folder_utama->id) {
-                $tempat_file = 'data_user/' . $akun . '/' . $folder_utama->nama_folder;
-            }
-
-            if ($parent_id) {
-                $folder_kedua = Folder::find($parent_id);
-                $tempat_file = 'data_user/' . $akun . '/' . $folder_kedua->nama_folder . '/' . $folder_utama->nama_folder;
-            }
-
-            Storage::putFileAs($tempat_file,$file,$nama);
-
-    
-            return back()->with('nama_tampil' , $nama);
+            return back()->with('nama_tampil', $nama_file);
         }
-
+        return back()->with('error', 'Gagal upload file');
     }
 
     public function hapus_file($id)
     {
-        $hapus_isi = Gallery::find($id);
-        $folder_utama = $hapus_isi->folder_id;
+        $file = Gallery::findOrFail($id);
+        $fileSize = $file->ukuran;
+        $user = auth()->user();
 
-        $cari_folder = Folder::find($folder_utama);
-        $parent_id = $cari_folder->parent_id;
-
-        $akun = auth()->id();
-
-        if ($cari_folder->id) {
-            $tempat = 'data_user/' .$akun . '/' . $cari_folder->nama_folder . '/' . $hapus_isi->file;
-
+        if (Storage::exists($file->path)) {
+            Storage::delete($file->path);
         }
+        $file->delete();
 
+        // Update storage used
+        $user->decrement('storage_used', $fileSize);
+
+        return back()->with('status_file', 'File berhasil dihapus');
+    }
+
+    public function folder(Request $request)
+    {
+        $request->validate([
+            'nama' => [
+                'required',
+                'min:3',
+                Rule::unique('folders', 'nama_folder')->where(function ($query) use ($request) {
+                    return $query->where('user_id', auth()->id())->where('parent_id', $request->parent_id);
+                })
+            ],
+            'parent_id' => 'nullable|exists:folders,id'
+        ]);
+
+        $user_id = auth()->id();
+        $nama_sanitized = Str::slug($request->nama, '_');
+        $parent_id = $request->parent_id;
+
+        $parent_path = 'data_user/' . $user_id;
         if ($parent_id) {
-            $folder_kedua = Folder::find($parent_id);
-            $tempat = 'data_user/' . $akun . '/' . $folder_kedua->nama_folder . '/' . $cari_folder->nama_folder . '/' . $hapus_isi->file;
-        }
- 
-
-
-        if (Storage::exists($tempat)) {
-            Storage::delete($tempat);
+            $parent = Folder::findOrFail($parent_id);
+            $parent_path = $parent->path;
         }
 
-        $hapus_isi->delete();
+        $folder_path = $parent_path . '/' . $nama_sanitized;
 
-        return back()->with('status_file', "File Berhasil dihapus");
+        if (!Storage::exists($folder_path)) {
+            Storage::makeDirectory($folder_path);
+        }
+
+        Folder::create([
+            'nama_folder' => $nama_sanitized,
+            'user_id' => $user_id,
+            'parent_id' => $parent_id,
+            'permission' => 1,
+            'path' => $folder_path
+        ]);
+
+        Wallet::firstOrCreate(['user_id' => $user_id], ['koin' => 0])->increment('koin', 10);
+
+        return back()->with('notif', 'Folder berhasil ditambahkan!');
+    }
+
+    public function new_folder($id)
+    {
+        $isi_folder = Folder::with(['children', 'user', 'files'])->findOrFail($id);
+
+        if ($isi_folder->permission == 0 && $isi_folder->user_id != auth()->id()) {
+            abort(403, 'Maaf Anda tidak memiliki izin');
+        }
+
+        return view('isi', compact('isi_folder'));
+    }
+
+    public function pencarian(Request $request)
+    {
+        $kunci = $request->cari;
+        $user = auth()->user();
+
+        if ($kunci) {
+            $pemisah_str = str_replace(' ', '_', $kunci);
+            $folders = $user->folders()->where('nama_folder', 'LIKE', '%' . $pemisah_str . '%')->get();
+            $files = $user->galleries()->where('nama_tampilan', 'LIKE', '%' . $pemisah_str . '%')->get();
+        } else {
+            $folders = $user->folders()->whereNull('parent_id')->get();
+            $files = $user->galleries()->whereNull('folder_id')->get();
+        }
+
+        return view('beranda', compact('user', 'folders', 'files'));
+    }
+
+    public function hapus_folder($id)
+    {
+        $folder = Folder::findOrFail($id);
+        $user = auth()->user();
+
+        // Recursively find all nested files to update storage_used
+        $this->deleteFolderAndContents($folder, $user);
+
+        return redirect()->route('beranda', $user->id)->with('folder_status', "Folder " . $folder->nama_folder . " berhasil dihapus");
+    }
+
+    private function deleteFolderAndContents($folder, $user)
+    {
+        // Delete all files in this folder
+        foreach ($folder->files as $file) {
+            $user->decrement('storage_used', $file->ukuran);
+            if (Storage::exists($file->path)) {
+                Storage::delete($file->path);
+            }
+            $file->delete();
+        }
+
+        // Recursively delete subfolders
+        foreach ($folder->children as $subfolder) {
+            $this->deleteFolderAndContents($subfolder, $user);
+        }
+
+        // Delete the physical directory
+        if (Storage::exists($folder->path)) {
+            Storage::deleteDirectory($folder->path);
+        }
+
+        // Delete the folder record
+        $folder->delete();
     }
 
     public function izin_file($id)
     {
-        $isi_file = Gallery::find($id);
-
+        $isi_file = Gallery::findOrFail($id);
         if ($isi_file->user_id != auth()->id() && $isi_file->izin == 0) {
-            abort(403, 'Maaf File berisi private');
+            abort(403, 'Maaf File ini bersifat private');
         }
-
-
-        return view('permission', data: compact('isi_file'));
+        return view('permission', compact('isi_file'));
     }
 
-    public function ubah_izin(Request $perizinan , $id)
+    public function ubah_izin(Request $request, $id)
     {
-        $ubah = Gallery::findOrFail($id);
+        $file = Gallery::findOrFail($id);
+        $request->validate(['izin' => 'required|in:0,1']);
 
-        $ubah->update([
-            'izin' => $perizinan->izin
-        ]);
+        $old_izin = $file->izin;
+        $file->update(['izin' => $request->izin]);
 
-        if ($ubah->izin == 1) {
-            $pesan = 'public';
+        $path = storage_path('app/' . $file->path);
+
+        if (!file_exists($path)) {
+            return back()->with('error', 'File fisik tidak ditemukan');
         }
-        if ($ubah->izin == 0) {
-            $pesan = 'private';
+
+        $content = file_get_contents($path);
+
+        // Encryption logic:
+        // If changing to private (0) from public (1)
+        if ($request->izin == 0 && $old_izin == 1) {
+            file_put_contents($path, encrypt($content));
+        } 
+        // If changing to public (1) from private (0)
+        elseif ($request->izin == 1 && $old_izin == 0) {
+            try {
+                file_put_contents($path, decrypt($content));
+            } catch (Exception $e) {
+                // Already public or decryption failed
+            }
         }
 
-
-        return back()->with('status', 'File '. $ubah->file . ' Menjadi ' . $pesan);
+        return back()->with('status', 'Izin file menjadi ' . ($request->izin == 1 ? 'Public' : 'Private'));
     }
 
     public function masuk_izin($id)
     {
-        $izin_folder = Folder::find($id);
-
-        return view('izin_folder',compact('izin_folder'));
+        $izin_folder = Folder::findOrFail($id);
+        return view('izin_folder', compact('izin_folder'));
     }
 
-    public function folder_permission(Request $permission , $id)
+    public function folder_permission(Request $request, $id)
     {
-        $folder_izin = Folder::find($id);
+        $folder = Folder::findOrFail($id);
+        $request->validate(['izin' => 'required|in:0,1']);
+        $folder->update(['permission' => $request->izin]);
 
-        $folder_izin->update([
-            'permission' => $permission->izin
-        ]);
-
-        if ($folder_izin->permission == 0) {
-            $pesan = 'Private';
-        }
-
-        if ($folder_izin->permission == 1) {
-            $pesan = 'Public';
-        }
-
-        return back()->with('status', 'File ' . $folder_izin->nama_folder . " menjadi " . $pesan );
-    }
-
-    public function hapus_akun($id)
-    {
-        $cari_akun = User::findOrFail($id);
-
-        $tempat = 'data_user/' . auth()->id();
-
-
-        if (Storage::exists($tempat)) {
-            Storage::deleteDirectory($tempat);
-        }
- 
-        $cari_akun->delete();
-
-        $pesan = 'akun berhasil dihapus';
-
-        return view('register',compact('pesan'));
+        return back()->with('status', 'Izin folder menjadi ' . ($request->izin == 1 ? 'Public' : 'Private'));
     }
 
     public function lihat_akun($id)
     {
-        $lihat_akun = User::find($id);
-
-        return view('akun',compact('lihat_akun'));
+        $lihat_akun = User::findOrFail($id);
+        return view('akun', compact('lihat_akun'));
     }
 
-    public function logout(Request $keluar)
+    public function hapus_akun($id)
     {
+        $user = User::findOrFail($id);
+        if ($user->id != auth()->id()) abort(403);
+
+        $path = 'data_user/' . $user->id;
+        if (Storage::exists($path)) {
+            Storage::deleteDirectory($path);
+        }
+
+        $user->delete();
         Auth::logout();
 
-        $keluar->session()->invalidate();
-        $keluar->session()->regenerateToken();
-
-
-        return view('register');
+        return view('register', ['pesan' => 'Akun berhasil dihapus']);
     }
 
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
+    }
 
     public function download_file($id)
     {
-        $file = Gallery::find($id);
-
-        $user_sekarang = auth()->id();
-
-        if ($file->user_id == $user_sekarang && $file->izin == 1) {
-            $tempat = 'data_user/' . $user_sekarang . '/' . $file->file;
-
-            return Storage::download($tempat);
+        $file = Gallery::findOrFail($id);
+        
+        if ($file->user_id == auth()->id() || $file->izin == 1) {
+            return Storage::download($file->path);
         }
 
-        return back()->with('error',"maaf data tidak bisa didownload!");
+        return back()->with('error', 'Maaf Anda tidak bisa mendownload file ini');
     }
 
     public function pindah($id)
     {
-        $ubah_nama = Gallery::find($id);
-
-        return view('rename',compact('ubah_nama'));
+        $ubah_nama = Gallery::findOrFail($id);
+        return view('rename', compact('ubah_nama'));
     }
 
-    public function rename( Request $ubah , $id)
+    public function rename(Request $request, $id)
     {
-        $cari_nama = Gallery::find($id);
+        $file = Gallery::findOrFail($id);
+        $request->validate(['ubah_nama' => 'required']);
 
-        $ubah->validate([
-            'ubah_nama' => 'required'
+        $nama_baru = Str::slug($request->ubah_nama, '_');
+        $file->update(['nama_tampilan' => $nama_baru]);
 
-        ]);
-
-        $nama_baru = str_replace(' ','_',$ubah->input('ubah_nama'));
-
-        $cari_nama->update(
-         
-            ['nama_tampilan' => $nama_baru]
-        );
-
-        $status_rename = 'File berhasil direname!';  
-
-        return view('beranda',compact(var_name: 'status_rename'));
-
-    }
-
-    public function download_subfile($id)
-    {
-        $cari_file = Gallery::findOrFail($id);
-        $id_folder = $cari_file->folder_id;
-
-        $cari_folder = Folder::find($id_folder);
-        $parent_id = $cari_folder->parent_id;
-
-        $user = auth()->id();
-
-        if ($cari_folder->id) {
-            $tempat = 'data_user/' . $user . '/'.  $cari_folder->nama_folder .'/' . $cari_file->file;
-        }
-
-        if ($parent_id) {
-            $folder_utama = Folder::find($parent_id);
-            $tempat = 'data_user/' . $user. '/' . $folder_utama->nama_folder . '/' . $cari_folder->nama_folder . '/' . $cari_file->file; 
-
-        }
-
-
-        if ($cari_file->user_id != auth()->id()) {
-
-            return back()->with('error','File tidak bisa didownload!');
-        }
-
-
-        return Storage::download($tempat);
-
+        return redirect()->route('beranda', auth()->id())->with('status', 'File berhasil di-rename!');
     }
 
     public function pindah_rename($id)
     {
-        $cari_folder = Folder::find($id);
-
-
-        return view('rename_folder',compact('cari_folder'));
+        $cari_folder = Folder::findOrFail($id);
+        return view('rename_folder', compact('cari_folder'));
     }
 
-    public function rename_f(Request $rename_folder, $id)
+    public function rename_f(Request $request, $id)
     {
-        $ubah = Folder::find($id);
+        $folder = Folder::findOrFail($id);
+        $request->validate(['rename' => 'required']);
 
-        $rename_folder->validate([
-            'rename' => 'required'
-        ]);
+        $nama_baru = Str::slug($request->rename, '_');
+        $folder->update(['nama_folder' => $nama_baru]);
 
-        $pemisah = str_replace(' ', '_', $rename_folder->input('rename'));
-
-        $ubah->update([
-            'nama_folder' => $pemisah
-        ]);
-
-        $pesan_berubah = 'File berhasil direname';
-
-
-        return view('beranda',compact('pesan_berubah'));
-
-
+        return back()->with('status', 'Folder berhasil di-rename');
     }
-
-    public function pindah_renamesub($id)
-    {
-        $cari_file = Gallery::find($id);
-
-
-        return view('rename_file',compact('cari_file'));
-    }
-
-    public function rename_sekarang(Request $ubah , $id)
-    {
-        $ubah_file = Gallery::find($id);
-
-
-        $ubah->validate([
-            'rename' => 'required'
-        ]);
-
-        $pemisah = str_replace(' ','_', $ubah->input('rename'));
-
-        $ubah_file->update([
-            'file' => $pemisah
-        ]);
-        $status = 'File berhasil direname';
-
-        return view('isi',compact('status'));
-    }
-
-    public function pindah_subfolder($id)
-    {
-        $folder_izin = Folder::find($id);
-
-        return view('izin_subfolder',compact('folder_izin'));
-    }
-
-    public function ubah_perizinan(Request $izinan,$id)
-    {
-        $izin_folder = Folder::find($id);
-
-        $izin_folder->update([
-            'permission' => $izinan->input('izin')
-        ]);
-
-
-        if ($izin_folder->permission == 1) {
-            
-            $pesan = 'public';
-        }
-        
-        
-        if ($izin_folder->permission == 0) {
-            $pesan = 'private';
-        }
-
-        return back()->with('status','File '. $izin_folder->nama_folder . ' Menjadi ' . $pesan);
-    }
-
-    public function perizinan_subfile($id)
-    {
-        $cari_file = Gallery::find($id);
-
-
-        return view('perizinan_subfile',compact('cari_file'));
-    }
-
-
-    public function izin_subfile(Request $izin_file, $id)
-    {
-        $file_perm = Gallery::find($id);
-
-        $file_perm->update([
-            'izin' => $izin_file->input('izin')
-        ]);
-
-        if ($izin_file->input('izin') == 0) {
-            $pesan = 'Private';
-        }
-
-        if ($izin_file->input('izin') == 1) {
-            $pesan = 'Public';
-        }
-
-
-        return back()->with('status','File ' . $file_perm->file . ' Menjadi ' . $pesan);
-    }
-
-    public function rename_subfolder($id)
-    {
-        $cari_folder = Folder::find($id);
-
-
-        return view('rename_subfolder',compact('cari_folder'));
-    }
-
-    public function renameFolder( Request $rename , $id)
-    {
-        $cari_folder = Folder::find($id);
-        
-        $rename->validate([
-            'rename' => 'required'
-        ]);
-
-        $pemisah = str_replace(' ','_',$rename->input('rename'));
-
-        $cari_folder->update([
-            'nama_folder' => $pemisah
-        ]);
-
-        $berubah = 'File berhasil direname'; 
-
-        return view('isi',compact('berubah'));
-    }
-
 
     public function open_file($id)
     {
-        $file = Gallery::find($id);
+        $file = Gallery::findOrFail($id);
+        $path = storage_path('app/' . $file->path);
 
-        $tempat = storage_path('app/data_user/data_user/' . auth()->id() . '/' . $file->file);
-
-        if ($file->izin == 0)  {
-            abort(403, 'Maaf anda tidak memiliki akses');
-
+        if (!file_exists($path)) {
+            return back()->with('error', 'File tidak ditemukan');
         }
 
+        $extension = strtolower(pathinfo($file->file, PATHINFO_EXTENSION));
+        $content = file_get_contents($path);
 
-
-
-        if (!file_exists($tempat)) {
-            return back()->with('error', 'file tidak ada');
+        // If it's private (izin == 0), it might be encrypted (legacy)
+        // Note: New files won't be physicaly encrypted per the new plan, 
+        // but we keep this for backward compatibility if needed.
+        if ($file->izin == 0) {
+            try {
+                $decrypted = decrypt($content);
+                $content = $decrypted;
+            } catch (Exception $e) {
+                // Not encrypted or wrong key
+            }
         }
 
-        try {
-            $parse = new \Smalot\PdfParser\Parser();
-            $pdf = $parse->parseFile($tempat);
-
-            $teks = $pdf->getText();
-
-            return view('lihat',compact('teks','file'));
-
-        } catch (\Exception $e ) {
-
-            return back()->with('status',$e->getMessage());
+        $base64 = base64_encode($content);
+        $mime = '';
+        
+        switch($extension) {
+            case 'jpg': case 'jpeg': $mime = 'image/jpeg'; break;
+            case 'png': $mime = 'image/png'; break;
+            case 'gif': $mime = 'image/gif'; break;
+            case 'pdf': $mime = 'application/pdf'; break;
+            case 'mp4': $mime = 'video/mp4'; break;
+            case 'webm': $mime = 'video/webm'; break;
+            default: $mime = 'text/plain';
         }
 
-
+        return view('lihat', compact('base64', 'file', 'extension', 'mime'));
     }
-
-  
-
-
-
 }
