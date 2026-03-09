@@ -31,9 +31,7 @@ class Register extends Controller
         User:: create([
             'name' => $nama_user,
             'email' => $email_user,
-            'password' => Hash::make($password_user),
-            'storage_quota' => 104857600,
-            'storage_used' => 0
+            'password' => Hash::make($password_user)
         ]);
 
         return redirect('register')->with('status','Register berhasil!!');
