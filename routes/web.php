@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Account
     Route::get('/lihat_akun/{id}', [Beranda::class, 'lihat_akun']);
     Route::get('/hapus_akun/{id}', [Beranda::class, 'hapus_akun']);
+
+    Route::get('/tempat_sampah', [Beranda::class, 'pindah_sampah']);
 });
 
 Route::middleware(['auth', 'throttle:10,1'])->group(function () {

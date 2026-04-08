@@ -347,6 +347,7 @@ class Beranda extends Controller
 
         return back()->with('status', 'Folder berhasil di-rename');
     }
+    
 
     public function open_file($id)
     {
@@ -388,5 +389,12 @@ class Beranda extends Controller
         }
 
         return view('lihat', compact('base64', 'file', 'extension', 'mime','waktu'));
+    }
+    
+
+    public function pindah_sampah()
+    {
+        $file_sampah = Gallery::onlyTrashed()->get();
+        return view('sampah',compact('file_sampah'));
     }
 }
