@@ -21,6 +21,7 @@ class Beranda extends Controller
     public function dashboard($id)
     {
         $user = User::findOrFail($id);
+        $folder = Folder::where("user_id",$id)->whereNull("parent_id")->get();
         $totalFiles = $user->galleries()->count();
         $totalFolders = $user->folders()->count();
         $usedMB = number_format($user->storage_used / 1024 / 1024, 1);
@@ -28,9 +29,10 @@ class Beranda extends Controller
         $totalMB = number_format($user->storage_quota / 1024 / 1024, 0);
         $percentage = ($user->storage_used / $user->storage_quota) * 100;
         $recentFiles = $user->galleries()->latest()->take(5)->get();
+        $file = Gallery::where("user_id",$id)->get();
 
         return view('dashboard', compact(
-            'user', 'totalFiles', 'totalFolders', 'usedMB', 'remainingMB', 'totalMB', 'percentage', 'recentFiles'
+            'user', 'totalFiles', 'totalFolders', 'usedMB', 'remainingMB', 'totalMB', 'percentage', 'recentFiles','folder','file'
         ));
     }
 

@@ -66,22 +66,28 @@
                     <tr><th class="px-6 py-3 font-medium">Name</th><th class="px-6 py-3 font-medium hidden sm:table-cell">Size</th><th class="px-6 py-3 font-medium hidden md:table-cell">Date</th><th class="px-6 py-3 font-medium text-right">Actions</th></tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @foreach($recentFiles as $file)
-                    @php $ext = strtolower(pathinfo($file->nama_tampilan, PATHINFO_EXTENSION)); @endphp
-                    <tr class="hover:bg-gray-50 transition-colors" data-file-id="{{ $file->id }}">
-                        <td class="px-6 py-4"><a href="/open_file/{{ $file->id }}" class="flex items-center gap-3 group">
+                    @foreach($file as $files)
+                    @php $ext = strtolower(pathinfo($files->nama_tampilan, PATHINFO_EXTENSION)); @endphp
+                    <tr class="hover:bg-gray-50 transition-colors" data-file-id="{{ $files->id }}">
+                        <td class="px-6 py-4"><a href="/open_file/{{ $files->id }}" class="flex items-center gap-3 group">
                             <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 @if(in_array($ext,['jpg','jpeg','png','gif','svg','webp'])) bg-violet-50 text-violet-400 @elseif(in_array($ext,['mp4','webm','mov','avi'])) bg-amber-50 text-amber-400 @elseif($ext==='pdf') bg-red-50 text-red-400 @else bg-blue-50 text-blue-400 @endif">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="text-gray-800 group-hover:text-blue-600 transition-colors truncate max-w-[150px] sm:max-w-xs font-medium">{{ $file->nama_tampilan }}</span>
+                            <span class="text-gray-800 group-hover:text-blue-600 transition-colors truncate max-w-[150px] sm:max-w-xs font-medium">{{ $files->nama_tampilan }}</span>
                         </a></td>
-                        <td class="px-6 py-4 text-gray-500 hidden sm:table-cell">{{ $file->ukuran_format }}</td>
-                        <td class="px-6 py-4 text-gray-500 hidden md:table-cell">{{ $file->created_at->format('d M Y') }}</td>
+                        <td class="px-6 py-4 text-gray-500 hidden sm:table-cell">{{ $files->ukuran_format }}</td>
+                        <td class="px-6 py-4 text-gray-500 hidden md:table-cell">{{ $files->created_at->format('d M Y') }}</td>
                         <td class="px-6 py-4"><div class="flex items-center justify-end gap-1">
-                            <a href="/download/{{ $file->id }}" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" aria-label="Download"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
-                            <a href="/open_file/{{ $file->id }}" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Open"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></a>
+                            <a href="/download/{{ $files->id }}" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" aria-label="Download"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
+                            <a href="/open_file/{{ $files->id }}" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Open"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></a>
                         </div></td>
                     </tr>
+                    @endforeach
+
+                    @foreach ($folder as $folder_semua )
+                        <p>{{ $folder_semua->nama_folder }}</p>
+                        <p>Date: {{$folder_semua->created_at->format("d M Y")  }}</p>
+                    
                     @endforeach
                 </tbody>
             </table>
