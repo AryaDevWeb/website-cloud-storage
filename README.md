@@ -1,59 +1,115 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AryaDev Cloud Storage
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> A secure, scalable, and modern cloud storage ecosystem featuring a powerful Laravel-based web interface and an integrated REST API.
 
-## About Laravel
+![Project Stage](https://img.shields.io/badge/Stage-Complete_/_In_Development-success.svg)
+![Framework](https://img.shields.io/badge/Framework-Laravel_12-red.svg)
+![Frontend](https://img.shields.io/badge/Frontend-Tailwind_CSS_%7C_Vanilla_JS-blue.svg)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📖 Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**AryaDev Cloud Storage** is a comprehensive File Management SaaS (Software-as-a-Service) solution. Designed with a consistent, minimalist Tailwind CSS design language, it provides users with deep file manipulation functionalities, recursive folder management, permission controls, precise storage usage analytics (via pie/donut charts), and native PDF/text integrations. It also securely serves a complete REST API using Laravel Sanctum to connect to external client applications (e.g., Mobile Apps).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ✨ Key Features
 
-## Learning Laravel
+- **Advanced File Management:** Supports recursive directory trees, file renaming, moving, soft-deletion (Trash), Starring, and Sharing.
+- **Categorized Views:** Fast and intuitive file accessibility through 'Recent', 'Starred', 'Shared', and 'Trash' quick-filters.
+- **Storage Analytics:** Real-time quota calculations displaying "Used vs Free" space utilizing interactive `Chart.js` components.
+- **Extensible API Access:** Built-in `/api/v1` namespace secured by **Laravel Sanctum**, enabling robust stateless communication for separate mobile/desktop clients.
+- **AWS S3 Cloud Support:** Integrated `league/flysystem-aws-s3-v3` allows flexible driver configuration for scalable cloud deployments.
+- **Native PDF Parsing:** Uses `smalot/pdfparser` and `spatie/pdf-to-text` for advanced document inspection features on the backend.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 💻 Tech Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Backend & Core
+- **Platform:** PHP ^8.2
+- **Framework:** Laravel 12.x
+- **Database:** PostgreSQL
+- **Authentication:** Session (Web) & Laravel Sanctum (API)
+- **Cloud Interface:** AWS S3 (via Flysystem)
 
-## Laravel Sponsors
+### Frontend (Web UI)
+- **Styling:** Tailwind CSS 4.0 (compiled via Vite)
+- **Interactivity:** Vanilla JavaScript (Module System: `fileManager.js`, `modalManager.js`, `uploadManager.js`, `previewManager.js`)
+- **Charting:** Chart.js
+- **Templating:** Laravel Blade (`dashboard`, `isi`, `akun`, `trash`)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🗂 Project Structure
 
-### Premium Partners
+```text
+├── app/                  
+│   ├── Http/Controllers/      # Web UI Logic Controllers
+│   ├── Http/Controllers/Api/  # Unified API endpoints for external apps
+│   └── Models/                # Eloquent schemas (User, File, Folder)
+├── database/                  # Migrations for tables and schema management
+├── routes/                    
+│   ├── web.php                # Web Interface Routing
+│   └── api.php                # App API Routing (prefix: /api/v1/)
+└── resources/                 
+    ├── css/app.css            # Tailwind directives and core Design Tokens
+    ├── js/modules/            # Modular Vanilla JavaScript logics
+    └── views/                 # Blade UI structural templates
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🚀 Installation & Build Instructions
 
-## Contributing
+### Prerequisites
+- **PHP** >= 8.2 & **Composer**
+- **Node.js** & **NPM**
+- **PostgreSQL** Server
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Setup Guide
 
-## Code of Conduct
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd website_cloud_storage
+   ```
+2. **Setup the Environment:**
+   Run the unified setup script (defined in `composer.json`):
+   ```bash
+   composer setup
+   ```
+   *The `setup` script will automatically execute `composer install`, duplicate `.env.example` to `.env`, generate the APP_KEY, execute database migrations, and install/build NPM dependencies.*
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. **Configure Database & Storage (Optional):**
+   Update your `.env` file with custom database credentials or AWS S3 keys if you aren't using the default local bindings.
+   ```ini
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=cloud_storage_db
+   DB_USERNAME=arya
+   DB_PASSWORD=aryaserver
+   # S3_ configurations ...
+   ```
 
-## Security Vulnerabilities
+4. **Start the Development Server:**
+   ```bash
+   composer dev
+   ```
+   *This initializes the Laravel HTTP Server, Queue Listeners, Log Pail, and Vite HMR concurrently.*
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 📡 API Architecture (v1)
 
-## License
+The application provides a structured API under the `/api/v1` namespace for separate mobile/desktop implementations to communicate with the core storage engine.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Essential Endpoints:
+- **Authentication:** `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`
+- **Files:** `GET /files`, `POST /files` (Upload), `GET /files/recent`, `GET /files/trash`
+- **File Actions:** `PATCH /files/{id}` (Rename/Move), `POST /files/{id}/star`, `GET /files/{id}/download`
+- **Folders:** `GET /folders/tree` (Recursive folder maps), `POST /folders`
+
+*(Note: Except for `/login` and `/register`, all API interactions require an `Authorization: Bearer <API-Token>` header)*
+
+## 🤝 Contributing & Maintenance
+
+Contributions targeting modular UI updates, vanilla JS test validations, or wider cloud-driver implementations are welcomed!
+
+1. Create a Feature Branch (`git checkout -b feature/NewImplementation`)
+2. Commit your Changes (`git commit -m 'Added custom share links'`)
+3. Push to Branch (`git push origin feature/NewImplementation`)
+4. Open a Pull Request
+
+## 📄 License
+This project is open-sourced under the MIT License.

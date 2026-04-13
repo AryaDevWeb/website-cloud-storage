@@ -2,32 +2,40 @@
 
 namespace App\Models;
 
-
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use App\Models\Gallery;
-use App\Models\Wallet;
-use App\Models\Folder;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'storage_used',
-        'storage_quota'
+        'storage_quota',
     ];
-    //
 
-    public function galleries() 
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'storage_used'    => 'integer',
+        'storage_quota'   => 'integer',
+        'email_verified_at' => 'datetime',
+    ];
+
+    public function galleries()
     {
         return $this->hasMany(Gallery::class);
-
     }
 
     public function wallets()
     {
-        return $this->hasOne(related: Wallet::class);
+        return $this->hasOne(Wallet::class);
     }
 
     public function folders()

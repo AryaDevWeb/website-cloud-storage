@@ -25,17 +25,27 @@ class Gallery extends Model
     ];
 
     protected $casts = [
-        'riwayat'  => 'datetime',
-        'starred'  => 'boolean',
-        'izin'     => 'integer',
+        'riwayat' => 'datetime',
+        'starred' => 'boolean',
+        'izin'    => 'integer',
     ];
 
-    public function getUkuranFormatAttribute()
+    public function getUkuranFormatAttribute(): string
     {
         $byte = $this->ukuran;
         if ($byte <= 0) return '0 B';
-        $unit = ['B','KB','MB','GB'];
-        $i = floor(log($byte, 1024));
+        $unit = ['B', 'KB', 'MB', 'GB'];
+        $i = (int) floor(log($byte, 1024));
         return round($byte / pow(1024, $i), 2) . ' ' . $unit[$i];
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function folder()
+    {
+        return $this->belongsTo(Folder::class);
     }
 }
