@@ -21,17 +21,9 @@ class Beranda extends Controller
     public function dashboard($id)
     {
         $user = User::findOrFail($id);
-        // #region agent log
+        
         $quota = (int) $user->storage_quota;
         $used = (int) $user->storage_used;
-        $pctRaw = $quota > 0 ? ($used / $quota) * 100 : null;
-        $logLine = json_encode(['sessionId' => '18d670', 'runId' => 'post-fix', 'hypothesisId' => 'H2', 'location' => 'Beranda.php:dashboard', 'message' => 'storage metrics', 'data' => ['user_id' => $user->id, 'storage_used' => $used, 'storage_quota' => $quota, 'pct_raw' => $pctRaw, 'quota_zero' => $quota === 0], 'timestamp' => (int) round(microtime(true) * 1000)])."\n";
-        try {
-            file_put_contents(base_path('debug-18d670.log'), $logLine, FILE_APPEND | LOCK_EX);
-            file_put_contents(storage_path('logs/debug-18d670.log'), $logLine, FILE_APPEND | LOCK_EX);
-        } catch (\Throwable $e) {
-        }
-        // #endregion
         $totalFiles = $user->galleries()->count();
         $totalFolders = $user->folders()->count();
         $usedMB = number_format($user->storage_used / 1024 / 1024, 1);
