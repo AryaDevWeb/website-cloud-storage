@@ -116,7 +116,7 @@ export async function fetchFile(id) {
  */
 export function uploadFile(file, folderId, { onProgress, onDone, onError }) {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('upload', file);
     formData.append('folder_id', folderId || '');
 
     if (USE_MOCKS) {
