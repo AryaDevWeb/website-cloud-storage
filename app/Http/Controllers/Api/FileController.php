@@ -397,7 +397,9 @@ class FileController extends Controller
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'txt'  => 'text/plain',
             default => 'application/octet-stream',
-        ];
+        
+        };
+    
     }
 
     private function paginatedResponse($data, int $page, int $lastPage, int $total): JsonResponse

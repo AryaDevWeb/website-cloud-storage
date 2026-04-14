@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 @php
   $pageTitle = 'Recent Files';
   $pageDesc  = "Files you've recently uploaded or accessed";
@@ -8,7 +8,7 @@
   $emptyIcon  = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>';
 @endphp
 @include('file_explorer')
-=======
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,4 +25,4 @@
     
 </body>
 </html>
->>>>>>> fcda812ca39614fe3dae046315c4083724966d22
+
