@@ -129,7 +129,7 @@
         </div>
 
         {{-- Grid View --}}
-        <div id="grid-view" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div id="folder-grid-view" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             @foreach ($isi_folder->files as $file)
             @php $ext = strtolower(pathinfo($file->nama_tampilan, PATHINFO_EXTENSION)); @endphp
             <div class="file-card bg-white border border-[#e2e8f0] rounded-xl p-4 group">
@@ -177,7 +177,7 @@
         </div>
 
         {{-- List View --}}
-        <div id="list-view" class="hidden">
+        <div id="folder-list-view" class="hidden">
             <div class="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-[#f8fafc] text-[#64748b] text-xs uppercase tracking-wider">
@@ -248,33 +248,15 @@
         </div>
         <h3 class="text-[#0f172a] font-semibold text-lg mb-2">Folder Kosong</h3>
         <p class="text-sm text-[#64748b] mb-6 max-w-xs">Upload file atau buat subfolder di sini.</p>
-        <div class="flex items-center gap-3">
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="hidden" name="folder_id" value="{{ $isi_folder->id }}">
-                <label class="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-medium rounded-xl transition-all hover:shadow-md hover:shadow-[#2563eb]/20">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/>
-                    </svg>
-                    Upload File
-                    <input type="file" name="upload" class="hidden" onchange="this.form.submit()">
-                </label>
-            </form>
-            <button onclick="document.getElementById('new-folder-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-sm font-medium text-[#0f172a] rounded-xl transition-colors border border-[#e2e8f0]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Subfolder
-            </button>
-        </div>
+        <p class="text-xs font-medium text-[#64748b]">Semua aksi baru dipusatkan ke tombol <span class="text-[#0f172a]">New</span> di sidebar.</p>
     </div>
     @endif
 
     {{-- Grid/List Toggle Script --}}
     <script>
         function switchView(view) {
-            const gridView = document.getElementById('grid-view');
-            const listView = document.getElementById('list-view');
+            const gridView = document.getElementById('folder-grid-view');
+            const listView = document.getElementById('folder-list-view');
             const gridBtn = document.getElementById('grid-btn');
             const listBtn = document.getElementById('list-btn');
             if (!gridView || !listView) return;
@@ -298,3 +280,9 @@
     </script>
 
 @endsection
+
+@push('scripts')
+<script>
+    window.__CURRENT_FOLDER_ID__ = @json($isi_folder->id);
+</script>
+@endpush

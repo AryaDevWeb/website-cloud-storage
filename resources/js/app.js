@@ -3,7 +3,7 @@
  */
 import './bootstrap';
 import {
-    initSidebar, initMobileSearch, initUserDropdown,
+    initSidebar, initMobileSearch, initUserDropdown, initNewMenu,
     initViewToggle, initConfirmModal, initContextMenu,
     initBottomSheet, initKebabMenus
 } from './modules/ui.js';
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
     initMobileSearch();
     initUserDropdown();
+    initNewMenu();
     initConfirmModal();
     initBottomSheet();
 
@@ -35,9 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initDragDrop();
     initFileInput();
 
-    // ── File explorer pages ───────────────────────────────
-    const hasExplorer = document.getElementById('grid-view') || document.getElementById('list-view');
-    if (hasExplorer) {
+    // ── SPA file explorer only (not server-rendered folder page isi.blade)
+    const spaExplorer = document.querySelector('[data-spa-explorer]');
+    if (spaExplorer) {
         initViewToggle();
         initContextMenu(handleAction);
         initKebabMenus(handleAction);

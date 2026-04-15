@@ -128,6 +128,44 @@ export function initUserDropdown() {
     });
 }
 
+// New menu
+export function initNewMenu() {
+    const wrapper = document.getElementById('sidebar-new-menu-wrapper');
+    const toggle = document.getElementById('sidebar-new-toggle');
+    const menu = document.getElementById('sidebar-new-menu');
+
+    if (!wrapper || !toggle || !menu) return;
+
+    const closeMenu = () => {
+        menu.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    toggle.addEventListener('click', () => {
+        const isHidden = menu.classList.toggle('hidden');
+        toggle.setAttribute('aria-expanded', String(!isHidden));
+    });
+
+    document.querySelectorAll('[data-new-close]').forEach(el => {
+        el.addEventListener('click', closeMenu);
+    });
+
+    document.querySelectorAll('[data-new-folder-trigger]').forEach(el => {
+        el.addEventListener('click', () => {
+            closeMenu();
+            document.getElementById('new-folder-modal')?.classList.remove('hidden');
+        });
+    });
+
+    document.addEventListener('click', e => {
+        if (!wrapper.contains(e.target)) closeMenu();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+
 // ── View toggle (grid/list) — persisted ─────────────────────
 export function initViewToggle(onSwitch) {
     const saved = localStorage.getItem('fileView') || 'grid';

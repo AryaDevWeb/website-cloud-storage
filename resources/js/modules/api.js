@@ -116,7 +116,7 @@ export async function fetchFile(id) {
  */
 export function uploadFile(file, folderId, { onProgress, onDone, onError }) {
     const formData = new FormData();
-    formData.append('upload', file);
+    formData.append('file', file);
     formData.append('folder_id', folderId || '');
 
     if (USE_MOCKS) {
@@ -147,19 +147,76 @@ export function uploadFile(file, folderId, { onProgress, onDone, onError }) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload');
     xhr.setRequestHeader('X-CSRF-TOKEN', CSRF());
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('Accept', 'application/json');
     xhr.upload.addEventListener('progress', e => {
         if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
     });
     xhr.addEventListener('load', () => {
+        const raw = xhr.responseText || '';
         if (xhr.status >= 200 && xhr.status < 300) {
-            onDone?.(JSON.parse(xhr.responseText));
+            try {
+                onDone?.(JSON.parse(raw));
+            } catch {
+                onError?.('Invalid server response (expected JSON)');
+            }
         } else {
-            onError?.(xhr.statusText);
+            let msg = xhr.statusText || 'Upload failed';
+            try {
+                const err = JSON.parse(raw);
+                if (err.message) msg = err.message;
+                if (err.errors) msg = Object.values(err.errors).flat().join('; ');
+            } catch { /* keep msg */ }
+            onError?.(msg);
         }
     });
     xhr.addEventListener('error', () => onError?.('Network error'));
     xhr.send(formData);
     return { abort: () => xhr.abort() };
+}
+
+/**
+ * POST /api/folder
+ */
+export async function createFolder(name, parentId = null) {
+    if (USE_MOCKS) {
+        await delay(200);
+        const newFolder = {
+            id: 'f' + Date.now(),
+            type: 'folder',
+            name,
+            items: 0,
+            modified: new Date().toISOString(),
+            owner: 'You',
+        };
+        mockStore.folders.unshift(newFolder);
+        return newFolder;
+    }
+
+    const res = await fetch('/api/folder', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ name, parent_id: parentId ?? '' }),
+    });
+
+    const raw = await res.text();
+    let data = {};
+    try {
+        data = raw ? JSON.parse(raw) : {};
+    } catch {
+        data = {};
+    }
+
+    if (!res.ok) {
+        throw new Error(data.message || 'Failed to create folder');
+    }
+
+    return data;
 }
 
 /**
@@ -228,35 +285,6 @@ export async function undoDelete() {
     }
     // REAL: POST /api/undo-delete
     return null;
-}
-
-/**
- * POST /api/folder   { name, parent_id }
- */
-export async function createFolder(name, parentId = null) {
-    if (USE_MOCKS) {
-        await delay(300);
-        const folder = {
-            id: 'f-' + Date.now(),
-            type: 'folder',
-            name,
-            items: 0,
-            modified: new Date().toISOString(),
-            owner: 'You',
-        };
-        mockStore.folders.unshift(folder);
-        return folder;
-    }
-    const res = await fetch('/api/folder', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': CSRF(),
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ name, parent_id: parentId }),
-    });
-    return res.json();
 }
 
 /**

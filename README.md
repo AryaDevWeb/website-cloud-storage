@@ -1,4 +1,4 @@
-# AryaDev Cloud Storage
+# Cloud Storage
 
 > A secure, scalable, and modern cloud storage ecosystem featuring a powerful Laravel-based web interface and an integrated REST API.
 
@@ -8,7 +8,7 @@
 
 ## 📖 Overview
 
-**AryaDev Cloud Storage** is a comprehensive File Management SaaS (Software-as-a-Service) solution. Designed with a consistent, minimalist Tailwind CSS design language, it provides users with deep file manipulation functionalities, recursive folder management, permission controls, precise storage usage analytics (via pie/donut charts), and native PDF/text integrations. It also securely serves a complete REST API using Laravel Sanctum to connect to external client applications (e.g., Mobile Apps).
+**Cloud Storage** is a comprehensive File Management SaaS (Software-as-a-Service) solution. Designed with a consistent, minimalist Tailwind CSS design language, it provides users with deep file manipulation functionalities, recursive folder management, permission controls, precise storage usage analytics (via pie/donut charts), and native PDF/text integrations. It also securely serves a complete REST API using Laravel Sanctum to connect to external client applications (e.g., Mobile Apps).
 
 ## ✨ Key Features
 
@@ -22,8 +22,8 @@
 ## 💻 Tech Stack
 
 ### Backend & Core
-- **Platform:** PHP ^8.2
-- **Framework:** Laravel 12.x
+- **Platform:** PHP 8.5.3
+- **Framework:** Laravel 12.49.0
 - **Database:** PostgreSQL
 - **Authentication:** Session (Web) & Laravel Sanctum (API)
 - **Cloud Interface:** AWS S3 (via Flysystem)
@@ -54,7 +54,7 @@
 ## 🚀 Installation & Build Instructions
 
 ### Prerequisites
-- **PHP** >= 8.2 & **Composer**
+- **PHP** 8.5.3 & **Composer**
 - **Node.js** & **NPM**
 - **PostgreSQL** Server
 

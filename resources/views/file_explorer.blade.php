@@ -2,6 +2,7 @@
 @section('title', $pageTitle ?? 'Files')
 
 @section('content')
+<div data-spa-explorer>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
         <h1 class="text-xl font-bold text-gray-900">{{ $pageTitle ?? 'Files' }}</h1>
@@ -9,11 +10,9 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         @if(!($trashMode ?? false))
-        <button onclick="document.getElementById('new-folder-modal').classList.remove('hidden')"
-                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-            <span class="hidden sm:inline">New Folder</span>
-        </button>
+        <span class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-xl">
+            Gunakan tombol New di sidebar
+        </span>
         @endif
         @if($trashMode ?? false)
         <button id="empty-trash-btn"
@@ -71,14 +70,12 @@
     <h3 class="text-base font-bold text-gray-700 mb-1">{{ $emptyTitle ?? 'Nothing here' }}</h3>
     <p class="text-sm text-gray-400 max-w-xs">{{ $emptyDesc ?? '' }}</p>
     @if(!($trashMode ?? false))
-    <button onclick="document.getElementById('file-input')?.click()" class="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/></svg>
-        Upload File
-    </button>
+    <p class="mt-5 text-xs font-medium text-gray-500">Gunakan tombol <span class="text-gray-700">New</span> di sidebar untuk upload file, upload folder, atau buat folder baru.</p>
     @endif
 </div>
 
 <div id="pagination" class="flex justify-center mt-6"></div>
+</div>
 @endsection
 
 @push('scripts')

@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('galleries', function (Blueprint $table) {
             $table->boolean('starred')->default(false);
-            $table->softDeletes();
         });
 
         Schema::table('folders', function (Blueprint $table) {
@@ -22,7 +21,6 @@ return new class extends Migration
     {
         Schema::table('galleries', function (Blueprint $table) {
             $table->dropColumn('starred');
-            $table->dropSoftDeletes();
         });
         Schema::table('folders', function (Blueprint $table) {
             $table->dropSoftDeletes();

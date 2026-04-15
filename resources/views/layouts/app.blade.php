@@ -50,11 +50,9 @@
 <div id="selection-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-2xl shadow-lg">
     <span id="sel-count" class="text-sm font-medium mr-2">0 selected</span>
     <div class="w-px h-5 bg-white/20"></div>
-   <form action="/download/{{ auth()->id() }}">
-        <button id="sel-download" class="p-2 rounded-lg hover:bg-white/10 transition-colors" aria-label="Download selected">
-            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        </button>
-   </form>
+    <button type="button" id="sel-download" class="p-2 rounded-lg hover:bg-white/10 transition-colors" aria-label="Download selected">
+        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    </button>
     <button id="sel-move" class="p-2 rounded-lg hover:bg-white/10 transition-colors" aria-label="Move selected">
         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
     </button>
@@ -71,9 +69,9 @@
 {{-- TOP NAVBAR                                             --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
 <header class="fixed top-0 left-0 right-0 z-40 h-16 bg-white border-b border-gray-200" role="banner">
-    <div class="h-full flex items-center justify-between px-4 lg:px-6">
+    <div class="relative h-full flex items-center justify-between px-4 lg:px-6">
         {{-- Left: burger (mobile) + logo --}}
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
             <button id="sidebar-toggle" class="lg:hidden p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Toggle menu">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
@@ -89,8 +87,8 @@
         </a>
 
         {{-- Center: Search (desktop) --}}
-        <div class="hidden md:block flex-1 max-w-xl mx-8">
-            <form class="relative" role="search">
+        <div class="hidden md:block absolute left-1/2 -translate-x-1/2 w-full max-w-2xl px-20 lg:px-0 pointer-events-none">
+            <form class="relative pointer-events-auto" role="search">
                 <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input id="desktop-search" name="cari" type="text" placeholder="Search files or folders..." autocomplete="off"
                        class="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-transparent rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 transition-all" aria-label="Search">
@@ -98,22 +96,11 @@
         </div>
 
         {{-- Right --}}
-        <div class="flex items-center gap-1 sm:gap-2">
+        <div class="flex items-center gap-1 sm:gap-2 ml-auto">
             <button id="mobile-search-toggle" class="md:hidden p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Search">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </button>
             @auth
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="file" id="file-input" name="upload" onchange="document.getElementById('upload-form').submit()">
-                <button id="upload-btn" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors" aria-label="Upload">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/></svg>
-                    Upload
-                </button>
-
-            </form>
-           
-            <input id="file-input" type="file" multiple class="hidden" aria-label="Choose files">
             <button class="relative p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Notifications">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                 <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -168,19 +155,38 @@
             <svg class="w-4 h-4 hidden" id="collapse-icon-right" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
     </div>
+    <div class="px-3 pb-3 border-b border-gray-100">
+        <div class="relative" id="sidebar-new-menu-wrapper">
+            <button id="sidebar-new-toggle" class="w-full flex items-center justify-center lg:justify-between gap-3 px-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-sm transition-colors" aria-expanded="false" aria-haspopup="true">
+                <span class="flex items-center gap-3">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span class="sidebar-label text-sm font-semibold">New</span>
+                </span>
+                <svg class="sidebar-label w-4 h-4 shrink-0 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="sidebar-new-menu" class="hidden absolute left-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-gray-200 shadow-xl py-2 z-50" role="menu" aria-label="Create new">
+                <button type="button" data-upload-trigger data-new-close class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-left" role="menuitem">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/></svg>
+                    Upload file
+                </button>
+                <button type="button" data-upload-folder-trigger data-new-close class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-left" role="menuitem">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v2H3V7zm0 6h18v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4z"/></svg>
+                    Upload folder
+                </button>
+                <button type="button" data-new-folder-trigger data-new-close class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-left" role="menuitem">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                    New folder
+                </button>
+            </div>
+        </div>
+    </div>
     <nav class="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Main">
         @php $nav = [
             ['url' => '/dashboard/' . auth()->id(), 'match' => 'dashboard*', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM14 13a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5z"/>', 'label' => 'Dashboard'],
             ['url' => '/beranda/' . auth()->id(), 'match' => 'beranda*', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>', 'label' => 'My Files'],
-<<<<<<< HEAD
             ['url' => '/recent',  'match' => 'recent',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>', 'label' => 'Recent'],
             ['url' => '/starred', 'match' => 'starred', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>', 'label' => 'Starred'],
             ['url' => '/shared',  'match' => 'shared',  'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>', 'label' => 'Shared'],
-=======
-            ['url' => '/halaman_recent/' . auth()->id(), 'match' => 'recent*', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>', 'label' => 'Recent'],
-            ['url' => '#', 'match' => 'starred*', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>', 'label' => 'Starred'],
-            ['url' => '#', 'match' => 'shared*', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>', 'label' => 'Shared'],
->>>>>>> fcda812ca39614fe3dae046315c4083724966d22
         ]; @endphp
         @foreach($nav as $n)
         <a href="{{ $n['url'] }}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ Request::is($n['match']) ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100' }}">
@@ -189,11 +195,7 @@
         </a>
         @endforeach
         <div class="!my-3 border-t border-gray-100"></div>
-<<<<<<< HEAD
         <a href="/trash" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium {{ Request::is('trash') ? 'bg-red-50 text-red-600' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100' }} transition-all">
-=======
-        <a href="/tempat_sampah/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-all">
->>>>>>> fcda812ca39614fe3dae046315c4083724966d22
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             <span class="sidebar-label">Trash</span>
         </a>
@@ -226,21 +228,19 @@
 </aside>
 @endauth
 <div id="sidebar-overlay" class="fixed inset-0 z-20 bg-black/20 hidden lg:hidden transition-opacity" aria-hidden="true"></div>
+@auth
+<input id="file-input" type="file" multiple class="hidden" aria-label="Choose files">
+<input id="folder-input" type="file" webkitdirectory directory multiple class="hidden" aria-label="Choose folder">
+@endauth
 
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- CONTEXT MENU (desktop right-click / kebab)             --}}
 {{-- ═══════════════════════════════════════════════════════ --}}
-<<<<<<< HEAD
 <div id="context-menu" class="hidden fixed z-[80] min-w-[200px] py-1.5 bg-white rounded-xl border border-gray-100 shadow-xl" role="menu" aria-label="File actions">
     <button data-ctx="open"     class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Preview</button>
     <button data-ctx="download" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download</button>
     <button data-ctx="star"     class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg><span class="ctx-star-label">Star</span></button>
     <div class="my-1 border-t border-gray-100"></div>
-=======
-<div id="context-menu" class="hidden fixed z-[80] min-w-[180px] py-1.5 bg-white rounded-xl border border-gray-200 shadow-lg" role="menu" aria-label="File actions">
-    <button data-ctx="open"     class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v8a2 2 0 01-2 2H5z"/></svg>Open</button>
-    <form action="/download/{{ auth()->id() }}">  <button data-ctx="download" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download</button></form>
->>>>>>> fcda812ca39614fe3dae046315c4083724966d22
     <button data-ctx="rename"   class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Rename</button>
     <button data-ctx="move"     class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>Move to…</button>
     <button data-ctx="share"    class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-800" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>Share</button>
@@ -429,14 +429,10 @@
     </div>
 </div>
 
-{{-- Mobile FAB --}}
-@auth
-<div class="fixed bottom-6 right-6 z-40 sm:hidden">
-    <button id="mobile-fab" class="flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:scale-95 transition-all" aria-label="Upload">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    </button>
-</div>
-@endauth
+
+
+
+
 
 {{-- ═══════════════════════════════════════════════════════ --}}
 {{-- MAIN CONTENT                                           --}}
@@ -459,6 +455,9 @@
     </div>
 </main>
 
+<script>
+    window.__CURRENT_FOLDER_ID__ = window.__CURRENT_FOLDER_ID__ ?? null;
+</script>
 @stack('scripts')
 </body>
 </html>

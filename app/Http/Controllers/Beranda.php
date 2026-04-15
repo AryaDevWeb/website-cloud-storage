@@ -20,6 +20,7 @@ class Beranda extends Controller
 {
     public function dashboard($id)
     {
+        abort_unless((int) $id === (int) auth()->id(), 403);
         $user = User::findOrFail($id);
         
         $quota = (int) $user->storage_quota;
@@ -70,7 +71,7 @@ class Beranda extends Controller
         {
             $request->validate([
                 'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf,video/mp4|max:2048',
-                'folder_id' => 'nullable|exists:folders,id'
+                'folder_id' => ['nullable', Rule::exists('folders', 'id')->where('user_id', auth()->id())],
             ]);
 
             if ($request->hasFile('upload')) {
@@ -90,7 +91,7 @@ class Beranda extends Controller
                 // Resolve path
                 $storage_path = 'data_user/' . $user_id;
                 if ($folder_id) {
-                    $folder = Folder::findOrFail($folder_id);
+                    $folder = $user->folders()->findOrFail($folder_id);
                     $storage_path = $folder->path;
                 }
 
@@ -431,21 +432,7 @@ class Beranda extends Controller
             ];
         });
 
-        $files = $filesQuery->get()->map(function($f) {
-            $ext = strtolower(pathinfo($f->file, PATHINFO_EXTENSION));
-            return [
-                'id' => (string)$f->id,
-                'type' => 'file',
-                'name' => $f->nama_tampilan,
-                'ext' => $ext,
-                'size' => $f->ukuran,
-                'modified' => $f->updated_at ? $f->updated_at->toIso8601String() : now()->toIso8601String(),
-                'owner' => 'You',
-                'status' => $f->status ?? 'ready',
-                'preview_type' => $f->preview_type ?: $this->mapPreviewType($ext),
-                'preview_path' => $f->preview_path,
-            ];
-        });
+        $files = $filesQuery->get()->map(fn ($f) => $this->mapFile($f));
 
         $items = collect()->merge($folders)->merge($files);
 
@@ -537,31 +524,31 @@ class Beranda extends Controller
                 'file' => 'required|file',
                 'folder_id' => 'nullable'
             ]);
-    
+
             $file = $request->file('file');
             $fileSize = $file->getSize();
             $user = auth()->user();
-    
+
             if (($user->storage_used + $fileSize) > $user->storage_quota) {
                 return response()->json(['message' => 'Penyimpanan penuh'], 422);
             }
-    
+
             $nama_file = ltrim($file->getClientOriginalName(), '/');
             $folder_id = ltrim($request->input('folder_id'), 'f');
             if (empty($folder_id) || $folder_id === 'null' || $folder_id === 'undefined') {
                 $folder_id = null;
             }
-    
+
             $user_id = $user->id;
-    
+
             $storage_path = 'data_user/' . $user_id;
             if ($folder_id) {
-                $folder = Folder::findOrFail($folder_id);
+                $folder = $user->folders()->findOrFail($folder_id);
                 $storage_path = $folder->path;
             }
-    
+
             $path = Storage::putFileAs($storage_path, $file, rtrim($nama_file));
-    
+
             $gallery = Gallery::create([
                 'user_id' => $user_id,
                 'folder_id' => $folder_id,
@@ -571,10 +558,10 @@ class Beranda extends Controller
                 'izin' => 1,
                 'path' => $path
             ]);
-    
+
             $user->increment('storage_used', $fileSize);
             Wallet::firstOrCreate(['user_id' => $user_id], ['koin' => 0])->increment('koin', 10);
-    
+
             return response()->json([
                 'id' => (string)$gallery->id,
                 'type' => 'file',
@@ -584,7 +571,10 @@ class Beranda extends Controller
                 'modified' => $gallery->updated_at->toIso8601String(),
                 'owner' => 'You'
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
