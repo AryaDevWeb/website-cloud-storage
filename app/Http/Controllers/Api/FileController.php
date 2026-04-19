@@ -60,8 +60,9 @@ class FileController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // SECURITY: tambahkan MIME type validation
         $request->validate([
-            'file'      => 'required|file|max:102400', // 100 MB
+            'file'      => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp,pdf,mp4,webm,mov,avi,mp3,wav,ogg,flac,txt,md,json,js,php,py,css,html,doc,docx,xls,xlsx,ppt,pptx|max:102400', // 100 MB
             'folder_id' => 'nullable|integer',
         ]);
 
@@ -77,7 +78,17 @@ class FileController extends Controller
         }
 
         $folderId    = $this->resolveId($request->input('folder_id'));
-        $namaFile    = ltrim($file->getClientOriginalName(), '/');
+        
+        // SECURITY: Gunakan UUID untuk storage, nama asli untuk display
+        $originalName = basename($file->getClientOriginalName());
+        $extension = $file->extension() ?: 'bin';
+        $safeName = \Illuminate\Support\Str::uuid()->toString() . '.' . $extension;
+        $displayName = mb_substr($originalName, 0, 255);
+        
+        if (empty($displayName)) {
+            return response()->json(['success' => false, 'message' => 'Nama file tidak valid'], 422);
+        }
+        
         $storagePath = 'data_user/' . $user->id;
 
         if ($folderId) {
@@ -85,16 +96,20 @@ class FileController extends Controller
             $storagePath = $folder->path;
         }
 
-        $path = Storage::putFileAs($storagePath, $file, $namaFile);
+        // Simpan dengan nama UUID
+        Storage::putFileAs($storagePath, $file, $safeName);
+        
+        // Build full path untuk database
+        $fullPath = $storagePath . '/' . $safeName;
 
         $gallery = Gallery::create([
             'user_id'       => $user->id,
             'folder_id'     => $folderId,
-            'file'          => $namaFile,
-            'nama_tampilan' => $namaFile,
+            'file'          => $safeName,           // UUID untuk storage
+            'nama_tampilan' => $displayName,        // Nama asli untuk display
             'ukuran'        => $fileSize,
             'izin'          => 1,
-            'path'          => $path,
+            'path'          => $fullPath,           // Path lengkap di database
             'riwayat'       => now(),
         ]);
 

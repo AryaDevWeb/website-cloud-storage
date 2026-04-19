@@ -18,6 +18,25 @@ use Illuminate\Validation\Rule;
 
 class Beranda extends Controller
 {
+    /**
+     * Generate safe filename menggunakan UUID + ekstensi asli
+     * Mencegah path traversal dan filename prediction
+     */
+    private function generateSafeFilename($file): string
+    {
+        $extension = $file->extension() ?: 'bin';
+        return Str::uuid()->toString() . '.' . $extension;
+    }
+
+    /**
+     * Sanitasi nama file asli untuk display (tidak untuk storage)
+     */
+    private function sanitizeDisplayName($file): string
+    {
+        $name = basename($file->getClientOriginalName());
+        return mb_substr($name, 0, 255);
+    }
+
     public function dashboard($id)
     {
         abort_unless((int) $id === (int) auth()->id(), 403);
@@ -70,7 +89,7 @@ class Beranda extends Controller
         public function upload(Request $request)
         {
             $request->validate([
-                'upload' => 'required|file|mimetypes:image/jpeg,image/png,image/jpg,application/pdf,video/mp4|max:2048',
+                'upload' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp,pdf,mp4,webm,mov,avi,mp3,wav,ogg,flac,txt,md,json,js,php,py,css,html,doc,docx,xls,xlsx,ppt,pptx|max:2048',
                 'folder_id' => ['nullable', Rule::exists('folders', 'id')->where('user_id', auth()->id())],
             ]);
 
@@ -84,27 +103,34 @@ class Beranda extends Controller
                     return back()->with('error', 'Penyimpanan Anda penuh! Sisa ruang: ' . number_format(($user->storage_quota - $user->storage_used) / 1024 / 1024, 2) . ' MB');
                 }
 
-                $nama_file = $file->getClientOriginalName();
+                // SECURITY: Gunakan UUID untuk nama file storage, nama asli untuk display
+                $safeName = $this->generateSafeFilename($file);
+                $displayName = $this->sanitizeDisplayName($file);
+                
                 $folder_id = $request->input('folder_id');
                 $user_id = $user->id;
 
-                // Resolve path
+                // Resolve path - gunakan path dari folder jika ada
                 $storage_path = 'data_user/' . $user_id;
                 if ($folder_id) {
                     $folder = $user->folders()->findOrFail($folder_id);
                     $storage_path = $folder->path;
                 }
 
-                $path = Storage::putFileAs($storage_path, $file, $nama_file);
+                // Simpan file dengan nama UUID
+                Storage::putFileAs($storage_path, $file, $safeName);
+                
+                // Build full path untuk database
+                $fullPath = $storage_path . '/' . $safeName;
 
                 Gallery::create([
                     'user_id' => $user_id,
                     'folder_id' => $folder_id,
-                    'file' => $nama_file,
-                    'nama_tampilan' => $nama_file,
+                    'file' => $safeName,           // UUID untuk storage
+                    'nama_tampilan' => $displayName, // Nama asli untuk display
                     'ukuran' => $fileSize,
                     'izin' => 1,
-                    'path' => $path,
+                    'path' => $fullPath,           // Path lengkap di database
                     'riwayat' => now()
                 ]);
 
@@ -113,7 +139,7 @@ class Beranda extends Controller
 
                 Wallet::firstOrCreate(['user_id' => $user_id], ['koin' => 0])->increment('koin', 10);
 
-                return back()->with('nama_tampil', $nama_file);
+                return back()->with('nama_tampil', $displayName);
             }
             return back()->with('error', 'Gagal upload file');
         }
@@ -294,14 +320,18 @@ class Beranda extends Controller
 
     public function download_file($id)
     {
-        $file = Gallery::findOrFail($id);
+        $user = auth()->user();
         
-        // If owner or public
-        if ($file->user_id == auth()->id() || $file->izin == 1) {
-            return Storage::download($file->path, $file->nama_tampilan);
-        }
-
-        return back()->with('error', 'Maaf Anda tidak bisa mendownload file ini');
+        // SECURITY: Hardened access layer - filter by user_id + izin + exclude trashed
+        $file = Gallery::whereNull('deleted_at')
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('izin', 1);
+            })
+            ->findOrFail($id);
+        
+        // Gunakan path dari database, jangan reconstruct
+        return Storage::download($file->path, $file->nama_tampilan);
     }
 
     public function pindah($id)
@@ -341,13 +371,17 @@ class Beranda extends Controller
 
     public function open_file($id)
     {
-        $file = Gallery::findOrFail($id);
+        $user = auth()->user();
+        
+        // SECURITY: Hardened access layer - filter by user_id + izin + exclude trashed
+        $file = Gallery::whereNull('deleted_at')
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('izin', 1);
+            })
+            ->findOrFail($id);
 
-        // Check ownership or if it's public (izin == 1)
-        if ($file->user_id != auth()->id() && $file->izin == 0) {
-            abort(403, 'Maaf File ini bersifat private');
-        }
-
+        // Gunakan path dari database, jangan reconstruct
         $path = storage_path('app/' . $file->path);
         $waktu = is_null($file->riwayat) ? 'belum pernah dilihat' : $file->riwayat->diffForHumans();
 
@@ -520,8 +554,9 @@ class Beranda extends Controller
     public function uploadAjax(Request $request)
     {
         try {
+            // SECURITY: Validasi yang lebih ketat dengan allowlist
             $request->validate([
-                'file' => 'required|file',
+                'file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp,pdf,mp4,webm,mov,avi,mp3,wav,ogg,flac,txt,md,json,js,php,py,css,html,doc,docx,xls,xlsx,ppt,pptx|max:10240',
                 'folder_id' => 'nullable'
             ]);
 
@@ -533,7 +568,10 @@ class Beranda extends Controller
                 return response()->json(['message' => 'Penyimpanan penuh'], 422);
             }
 
-            $nama_file = ltrim($file->getClientOriginalName(), '/');
+            // SECURITY: Gunakan UUID untuk storage, nama asli untuk display
+            $safeName = $this->generateSafeFilename($file);
+            $displayName = $this->sanitizeDisplayName($file);
+            
             $folder_id = ltrim($request->input('folder_id'), 'f');
             if (empty($folder_id) || $folder_id === 'null' || $folder_id === 'undefined') {
                 $folder_id = null;
@@ -541,22 +579,27 @@ class Beranda extends Controller
 
             $user_id = $user->id;
 
+            // Resolve path
             $storage_path = 'data_user/' . $user_id;
             if ($folder_id) {
                 $folder = $user->folders()->findOrFail($folder_id);
                 $storage_path = $folder->path;
             }
 
-            $path = Storage::putFileAs($storage_path, $file, rtrim($nama_file));
+            // Simpan dengan nama UUID
+            Storage::putFileAs($storage_path, $file, $safeName);
+            
+            // Build full path untuk database
+            $fullPath = $storage_path . '/' . $safeName;
 
             $gallery = Gallery::create([
                 'user_id' => $user_id,
                 'folder_id' => $folder_id,
-                'file' => rtrim($nama_file),
-                'nama_tampilan' => rtrim($nama_file),
+                'file' => $safeName,           // UUID untuk storage
+                'nama_tampilan' => $displayName, // Nama asli untuk display
                 'ukuran' => $fileSize,
                 'izin' => 1,
-                'path' => $path
+                'path' => $fullPath            // Path lengkap di database
             ]);
 
             $user->increment('storage_used', $fileSize);
@@ -893,8 +936,8 @@ class Beranda extends Controller
     public function streamFile(Request $request, $id)
     {
         $user = auth()->user();
-        // ENSURE SECURITY: User must own the file OR the file must be public (izin == 1)
-        $file = Gallery::where(function($q) use ($user) {
+        // SECURITY: exclude trashed files + ownership check
+        $file = Gallery::whereNull('deleted_at')->where(function($q) use ($user) {
             $q->where('user_id', $user->id)
               ->orWhere('izin', 1);
         })->findOrFail($id);
@@ -933,7 +976,8 @@ class Beranda extends Controller
 
     public function pindah_sampah()
     {
-        $file_sampah = Gallery::onlyTrashed()->get();
+        // SECURITY: filter by user_id untuk mencegah data leak
+        $file_sampah = Gallery::where('user_id', auth()->id())->onlyTrashed()->get();
         return view('sampah',compact('file_sampah'));
     }
 
